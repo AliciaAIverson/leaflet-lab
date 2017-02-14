@@ -1,0 +1,34 @@
+<!DOCTYPE html> <!--The <!DOCTYPE html> tag indicates to the browser that this is an HTML5 file.-->
+<html lang="en"> <!--The <html lang="en"> tag opens the html code, telling the browser to interpret the code as English.-->
+	<head>
+		<meta charset="utf-8"> <!--this <meta> tag declares the character set as UTF-8, which interprets the broadest possible range of ASCII characters.-->
+		<meta name="viewport" content="width=device-width"> <!--this <meta> tag sets the width of the page to the width of the device monitor, ensuring that the content stays within the available frame regardless of device size.-->
+		<!--While there are other options available for the <meta name="viewport"> tag, this is really the only setting that should ever be used, and it should always be included.-->
+		<title>
+			AAIverson Leaflet Lab/Module 4.
+		</title> <!--The <title> open and closing tags declare the title of the page; text in between these tags will appear in the tab at the top of the browser page.-->
+
+		<!--put your external stylesheet links here-->
+		<!--The <link> tag links out to the website stylesheet.-->
+		<link rel="stylesheet" href="lib/leaflet/leaflet.css">
+		<link rel="stylesheet" href="css/style.css">
+		
+		<!--[if IE<9]>
+			<link rel="stylesheet" href="css/style.ie.css">
+		<![endif]-->
+			<!--this conditional statement, although it looks like a comment, loads a different stylesheet formatted for old versions of Internet Explorer prior to version 9.-->
+	</head>
+
+	<body> <!--The <body> will contain the majority of the page content you write in HTML. Below your custom HTML is where you should place your <script> tags tags linking to the site's javascript.-->
+		<!--put your initial page content here-->
+		<!--you can also use this space for internal scripts or stylesheets;
+		place these within <script> or <style> tags-->
+		<div id="mapid"></div>
+		<!--put your external script links here-->
+		<script type="text/javascript" src="lib/jquery-3.1.1.js"></script>
+		<script type="text/javascript" src="lib/leaflet/leaflet-src.js"></script>
+		<!--leaflet providers plugin that makes loading tile layers easier = shortcut-->
+		<script type="text/javascript" src="lib/leaflet-providers.js"></script>
+		<script type="text/javascript" src="js/main.js"></script>
+	</body>
+</html>
