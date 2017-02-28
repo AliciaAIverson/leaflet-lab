@@ -3,25 +3,7 @@
 //CONTAINS: LEAFLET LAB
 //DATE: 2.28.17
 ////GOAL: Implement Operators that support your map, by first experimenting by adding the Retrieve (popup) operator and a Sequence operator with a slider for the user interface. Also, implement a fifth operator that is logical for the map. 
-//NOTE: MISSING 5TH OPERATOR!
-
-//////Detailed Psuedo-Code for SEQUENCE operator//////////////
-//GOAL: Allow the user to sequence through the attributes and resymbolize the map 
-//   according to each attribute
-//STEPS:
-//1. Create slider widget
-//2. Create skip buttons
-//3. Create an array of the sequential attributes to keep track of their order
-//4. Assign the current attribute based on the index of the attributes array
-//5. Listen for user input via affordances
-//6. For a forward step through the sequence, increment the attributes array index; 
-//   for a reverse step, decrement the attributes array index
-//7. At either end of the sequence, return to the opposite end of the seqence on the next step
-//   (wrap around)
-//8. Update the slider position based on the new index
-//9. Reassign the current attribute based on the new attributes array index
-//10. Resize proportional symbols according to each feature's value for the new attribute
-
+//NOTE: Change: Implemented (poorly formatted) 5th Operator
 
 //////////////////////////begin code//////////////////////////
 
@@ -40,7 +22,9 @@ function initialize(){
 	}).addTo(mymap); //Adds the layer to the map.
 
 	//call getData function
-	getData(mymap);
+	//getData(mymap);
+    getFemaleData(mymap);
+    //getMaleData(mymap);
 
 };
 
@@ -57,15 +41,50 @@ function calcPropRadius(attValue) {
     return radius;
 };
 
-//function to convert markers to circle markers
-function pointToLayer(feature, latlng, attributes){
-    //Step 4: Assign the current attribute based on the first index of the attributes array
-    // var attribute = attributes[0];
+// //function to convert markers to circle markers
+// function pointToLayer(feature, latlng, attributes){
+//     //Step 4: Assign the current attribute based on the first index of the attributes array
+//     // var attribute = attributes[0];
+
+//     //create marker options
+//     var optionsFemale = {
+//         fillColor: "#ff000",
+//         color: "#000",
+//         weight: 1,
+//         opacity: 1,
+//         fillOpacity: 0.1
+//     };
+
+//     //create circle marker layer
+//     //return the circle marker to the L.geoJson pointToLayer option
+//     return L.circleMarker(latlng, options);
+// };
+//function to convert markers to circle markers for Female attributes
+function pointToLayerFemale(feature, latlng, attributesFemale){
 
     //create marker options
-    var options = {
+    var optionsFemale = {
         fillColor: "#ff000",
-        color: "#000",
+        color: "#030",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.4
+    };
+
+    //create circle marker layer
+    //return the circle marker to the L.geoJson pointToLayer option
+    var femaleMarker = L.circleMarker(latlng, optionsFemale);
+    return femaleMarker;
+
+    //return L.circleMarker(latlng, options);
+};
+//function to convert markers to circle markers for Male attributes
+function pointToLayerMale(feature, latlng, attributesMale){
+
+    //create marker options
+    var optionsMale = {
+        fillColor: "#ff178",
+        color: "#178",
         weight: 1,
         opacity: 1,
         fillOpacity: 0.1
@@ -73,22 +92,41 @@ function pointToLayer(feature, latlng, attributes){
 
     //create circle marker layer
     //return the circle marker to the L.geoJson pointToLayer option
-    return L.circleMarker(latlng, options);
+    var maleMarker = L.circleMarker(latlng, optionsMale);
+    return maleMarker;
+    //return L.circleMarker(latlng, options);
 };
 
-
 //Add circle markers for point features to the map
-function createPropSymbols(data, mymap, attributes){
+function createPropSymbols(responseFemale, responseMale, mymap, attributesFemale, attributesMale){
     
-    console.log(attributes)
-    //create a Leaflet GeoJSON layer and add it to the map
-    L.geoJson(data, {
+
+    //create 2 Leaflet GeoJSON layers by gender and add them to the map
+    
+    var femaleLayer = L.geoJson(responseFemale, {
         pointToLayer: function(feature, latlng){
-            return pointToLayer(feature, latlng, attributes);
+            return pointToLayerFemale(feature, latlng, attributesFemale);
+        }
+    }).addTo(mymap);
+    var maleLayer = L.geoJson(responseMale, {
+        pointToLayer: function(feature, latlng){
+            return pointToLayerMale(feature, latlng, attributesMale);
         }
     }).addTo(mymap);
 
-    updatePropSymbols (mymap, attributes[0]);
+//Create layers control for overlay
+//Define variables. Create object w/2 layers and assign to l.control layers. Assign as just overlays. baseMaps is null (not toggling tilesets). 
+
+var baseMaps = null;
+
+var overlayMaps = {
+    "Female Under-5 Mortality": femaleLayer,
+    "Male Under-5 Mortality": maleLayer
+};
+    L.control.layers(baseMaps, overlayMaps).addTo(mymap);
+
+
+    updatePropSymbols (mymap, attributesFemale[0]);
 };
 
 
@@ -199,23 +237,28 @@ function processData(data){
     return attributes;
 };
 
-//Import GeoJSON data and call functions to execute with data
-function getData(mymap){
+//Import GeoJSON data and call functions to execute with data AND nested data
+function getFemaleData(mymap){
     //load the data
-    $.ajax("data/Mortality_Edits1.geojson", {
+    $.ajax("data/Female_Child_Mortality.geojson", {
         dataType: "json",
-        success: function(response){
-            //create an attributes array
-            var attributes = processData(response);
-            //call function to create proportional symbols
-            createPropSymbols(response, mymap, attributes);
-            //call function to create an HTML range slider
-            createSequenceControls(mymap, attributes);
+        success: function(responseFemale){
+            $.ajax("data/Male_Child_Mortality.geojson", {
+                dataType: "json",
+                success: function(responseMale){
+                    //create an attributes array
+                    var attributesFemale = processData(responseFemale);
+                    var attributesMale = processData(responseMale);
+                    //call function to create proportional symbols
+                    createPropSymbols(responseFemale, responseMale, mymap, attributesFemale, attributesMale);
+                    //call function to create an HTML range slider
+                    createSequenceControls(mymap, attributesFemale);
+                    createSequenceControls(mymap, attributesMale);
+                }
+            });
         }
     });
 };
-
-
 
 //call the initialize function when the document has loaded
 $(document).ready(initialize);
