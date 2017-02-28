@@ -1,2 +1,31 @@
 /* Stylesheet by AAIverson, Jan.2017 */
-#mapid { height: 600px; }
+#mapid {
+    height: 400px;
+    width: 100%;
+    display: inline-block;
+}
+
+#panel {
+    width: 100%;
+    padding: 0px;
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+    line-height: 40px;
+}
+
+.range-slider {
+	width: 85%;
+}
+
+#forward {
+    float: right;
+}
+
+#reverse {
+    float: left;
+}
+
+.leaflet-popup-content p {
+	margin: 0.2em 0;
+}
