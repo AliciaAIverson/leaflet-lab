@@ -5,7 +5,16 @@
     display: inline-block;
 }
 
-#panel {
+#panelFemale {
+    width: 100%;
+    padding: 0px;
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+    line-height: 40px;
+}
+
+#panelMale {
     width: 100%;
     padding: 0px;
     display: inline-block;
@@ -18,11 +27,19 @@
 	width: 85%;
 }
 
-#forward {
+#forwardMale {
     float: right;
 }
 
-#reverse {
+#reverseMale {
+    float: left;
+}
+
+#forwardFemale {
+    float: right;
+}
+
+#reverseFemale {
     float: left;
 }
 

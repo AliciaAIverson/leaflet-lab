@@ -10,8 +10,19 @@
 //initialize function called when the script loads to instantiate Leaflet map
 function initialize(){
 
+    //setting variables to implement panning constraint
+    var southWest = L.latLng(-90, -180),
+    northEast = L.latLng(90, 180),
+    bounds = L.latLngBounds(southWest, northEast);
+
 	//create map
-	var mymap = L.map('mapid').setView([20, 0], 2);
+	//var mymap = L.map('mapid').setView([20, 0], 2);
+    var mymap = L.map('mapid', {
+        center: [20,0],
+        zoom: 2,
+        maxBounds: bounds,
+        maxBoundsViscosity: 0.7
+    });
 
 	//add OSM base tilelayer
 	L.tileLayer('https://api.mapbox.com/styles/v1/aai3/ciypzrn44000y2rptm8kxjuyo/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYWFpMyIsImEiOiJjaXNodXV0MDMwMDdoMnpsc3h5eHpsNW1oIn0.Cgw3sUtk9HXvNEYbnu2NeA', {
@@ -24,7 +35,7 @@ function initialize(){
 	//call getData function
 	//getData(mymap);
     getFemaleData(mymap);
-    //getMaleData(mymap);
+    // essentially also calls getMaleData(mymap); because nested
 
 };
 
@@ -32,7 +43,7 @@ function initialize(){
 //calculate the radius of each proportional symbol
 function calcPropRadius(attValue) {
     //scale factor to adjust symbol size evenly
-    var scaleFactor = 2; //but what does this imply as far as user perception/understanding, if the scalFactor is larger?
+    var scaleFactor = 2.5; //but what does this imply as far as user perception/understanding, if the scalFactor is larger?
     //area based on attribute value and scale factor
     var area = attValue * scaleFactor;
     //radius calculated based on area
@@ -64,11 +75,11 @@ function pointToLayerFemale(feature, latlng, attributesFemale){
 
     //create marker options
     var optionsFemale = {
-        fillColor: "#ff000",
-        color: "#030",
+        fillColor: "#990000",
+        color: "#990000",
         weight: 1,
-        opacity: 1,
-        fillOpacity: 0.4
+        opacity: 0.9,
+        fillOpacity: 0.75
     };
 
     //create circle marker layer
@@ -83,11 +94,11 @@ function pointToLayerMale(feature, latlng, attributesMale){
 
     //create marker options
     var optionsMale = {
-        fillColor: "#ff178",
-        color: "#178",
+        fillColor: "#231F20",
+        color: "#000",
         weight: 1,
         opacity: 1,
-        fillOpacity: 0.1
+        fillOpacity: 0
     };
 
     //create circle marker layer
@@ -108,6 +119,7 @@ function createPropSymbols(responseFemale, responseMale, mymap, attributesFemale
             return pointToLayerFemale(feature, latlng, attributesFemale);
         }
     }).addTo(mymap);
+    
     var maleLayer = L.geoJson(responseMale, {
         pointToLayer: function(feature, latlng){
             return pointToLayerMale(feature, latlng, attributesMale);
@@ -131,21 +143,22 @@ var overlayMaps = {
 
 
 //Step 1: Create new sequence controls
-function createSequenceControls(mymap, attributes){
+//function createSequenceControls(mymap, attributes){
+function createSequenceControlsFemale(mymap, attributesFemale){
     
     //add skip buttons
-    $('#panel').append('<button class="skip" id="reverse">Reverse</button>');
-    $('#panel').append('<button class="skip" id="forward">Skip</button>');
+    $('#panelFemale').append('<button class="skip" id="reverseFemale">Reverse</button>');
+    $('#panelFemale').append('<button class="skip" id="forwardFemale">Skip</button>');
     //replace button content with images
-    $('#reverse').html('<img src="img/reverse.png">');
-    $('#forward').html('<img src="img/forward.png">');
+    $('#reverseFemale').html('<img src="img/reverse.png">');
+    $('#forwardFemale').html('<img src="img/forward.png">');
 
     //create range input element (slider)
-    $('#panel').append('<input class="range-slider" type="range">');
+    $('#panelFemale').append('<input class="range-slider" type="range">');
     //set slider attributes
     $('.range-slider').attr({
-        max: 9, //10 slider positions 
-        min: 0, //index o' first attribute 
+        max: 4, //5 slider positions (0 index -> 5 = 4)
+        min: 1, //index o' first attribute 
         value: 0, //start at first att in sequence
         step: 1 //slider's value inc/decremented by 1
     });
@@ -153,35 +166,82 @@ function createSequenceControls(mymap, attributes){
     //Step 5: click listener for buttons
     $('.skip').click(function(){
         //get the old index value
-        var index = $('.range-slider').val();
-        
+        var indexFemale = $('.range-slider').val();
 
         //Step 6: increment or decrement depending on button clicked
         if ($(this).attr('id') == 'forward'){
-            index++;
+            indexFemale++;
             //Step 7: if past the last attribute, wrap around to first attribute
-            index = index > 14 ? 0 : index;
+            indexFemale = indexFemale > 4 ? 0 : indexFemale;
         } else if ($(this).attr('id') == 'reverse'){
-            index--;
+            indexFemale--;
             //Step 7: if past the first attribute, wrap around to last attribute
-            index = index < 0 ? 14 : index;
+            indexFemale = indexFemale < 0 ? 4 : indexFemale;
         };
 
         //Step 8: update slider based on above new index
-        $('.range-slider').val(index);
+        $('.range-slider').val(indexFemale);
         //Step 9: Reassign the current attribute based on the new attributes array index
-        updatePropSymbols(mymap, attributes[index])
+        updatePropSymbols(mymap, attributesFemale[indexFemale])
     });
 
     //Step 5: input listener for slider
     $('.range-slider').on('input', function(){
         //Step 6: get the new index value
-        var index = $(this).val();
-        updatePropSymbols(mymap, attributes[index])
+        var indexFemale = $(this).val();
+        updatePropSymbols(mymap, attributesFemale[indexFemale])
+    });
+};
+
+//Create male sequence controls
+function createSequenceControlsMale(mymap, attributesMale){
+    
+    //add skip buttons
+    $('#panelMale').append('<button class="skip" id="reverseMale">Reverse</button>');
+    $('#panelMale').append('<button class="skip" id="forwardMale">Skip</button>');
+    //replace button content with images
+    $('#reverseMale').html('<img src="img/reverse.png">');
+    $('#forwardMale').html('<img src="img/forward.png">');
+
+    //create range input element (slider)
+    $('#panelMale').append('<input class="range-slider" type="range">');
+    //set slider attributes
+    $('.range-slider').attr({
+        max: 4, //5 slider positions (0 index -> 5 = 4)
+        min: 1, //index o' first attribute 
+        value: 0, //start at first att in sequence
+        step: 1 //slider's value inc/decremented by 1
     });
 
-    
+    //Step 5: click listener for buttons
+    $('.skip').click(function(){
+        //get the old index value
+        var indexMale = $('.range-slider').val();
+        
 
+        //Step 6: increment or decrement depending on button clicked
+        if ($(this).attr('id') == 'forward'){
+            indexMale++;
+            //Step 7: if past the last attribute, wrap around to first attribute
+            indexMale = indexMale > 4 ? 0 : indexMale;
+        } else if ($(this).attr('id') == 'reverse'){
+            indexMale--;
+            //Step 7: if past the first attribute, wrap around to last attribute
+            indexMale = indexMale < 0 ? 4 : indexMale;
+        };
+
+        //Step 8: update slider based on above new index
+        $('.range-slider').val(indexMale);
+        //Step 9: Reassign the current attribute based on the new attributes array index
+        updatePropSymbols(mymap, attributesMale[indexMale])
+    });
+
+    //Step 5: input listener for slider
+    $('.range-slider').on('input', function(){
+        //Step 6: get the new index value
+        var indexMale = $(this).val();
+        updatePropSymbols(mymap, attributesMale[indexMale])
+    });
 };
 
 //Step 10: Resize proportional symbols according to new attribute values
@@ -190,7 +250,6 @@ function updatePropSymbols(map, attribute){
         if (layer.feature && layer.feature.properties[attribute]){
             //access feature properties
             var props = layer.feature.properties;
-            console.log(props[attribute]);
 
             //update each feature's radius based on new attribute values
             var radius = calcPropRadius(props[attribute]);
@@ -216,6 +275,7 @@ function updatePropSymbols(map, attribute){
         };
     });
 };
+
 
 //Step 3: build an attributes array from the data3. Create an array of the sequential attributes to keep track of their order.
 function processData(data){
@@ -252,8 +312,8 @@ function getFemaleData(mymap){
                     //call function to create proportional symbols
                     createPropSymbols(responseFemale, responseMale, mymap, attributesFemale, attributesMale);
                     //call function to create an HTML range slider
-                    createSequenceControls(mymap, attributesFemale);
-                    createSequenceControls(mymap, attributesMale);
+                    createSequenceControlsFemale(mymap, attributesFemale);
+                    createSequenceControlsMale(mymap, attributesMale);
                 }
             });
         }
