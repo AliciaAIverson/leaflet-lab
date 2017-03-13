@@ -1,14 +1,5 @@
-//THIS IS main.js FOR LEAFLET LAB (Module 5B) FOR GEOG575 SPRING 2017.//
-//AUTHOR: AAIVERSON
-//CONTAINS: LEAFLET LAB
-//DATE: 2.28.17
-////GOAL: Implement Operators that support your map, by first experimenting by adding the Retrieve (popup) operator and a Sequence operator with a slider for the user interface. Also, implement a fifth operator that is logical for the map. 
-//NOTE: Change: Implemented (poorly formatted) 5th Operator
-
-//////////////////////////begin code//////////////////////////
-
 //initialize function called when the script loads to instantiate Leaflet map
-function initialize(){
+function createMap(){
 
     //setting variables to implement panning constraint
     var southWest = L.latLng(-90, -180),
@@ -20,9 +11,9 @@ function initialize(){
     var mymap = L.map('mapid', {
         center: [20,0],
         zoom: 2,
-        maxZoom: 4,
         maxBounds: bounds,
-        maxBoundsViscosity: 0.7
+        maxBoundsViscosity: 0.7,
+        maxZoom: 4,
     });
 
 	//add OSM base tilelayer
@@ -40,8 +31,9 @@ function initialize(){
     // essentially also calls getMaleData(mymap); because nested
 };
 
+
+
 //Dynamically calculating each circle marker radius for proportional symbol display...area relative to attribute value...
-//calculate the radius of each proportional symbol
 function calcPropRadius(attValue) {
     //scale factor to adjust symbol size evenly
     var scaleFactor = 2.5; //but what does this imply as far as user perception/understanding, if the scalFactor is larger?
@@ -64,20 +56,12 @@ function pointToLayerFemale(feature, latlng, attributesFemale){
         opacity: 0.9,
         fillOpacity: 0.75
     };
-
-    //create circle marker layer
-    //return the circle marker to the L.geoJson pointToLayer option
-    var femaleMarker = {
-        L.circleMarker(latlng, optionsFemale)
-    };
-    return femaleMarker
-
-    //return L.circleMarker(latlng, options);
+    //create circle marker layer by returning the circle marker to the L.geoJson pointToLayer option
+    return L.circleMarker(latlng, optionsFemale)
 };
 
 //function to convert markers to circle markers for Male attributes
 function pointToLayerMale(feature, latlng, attributesMale){
-
     //create marker options
     var optionsMale = {
         fillColor: "#231F20",
@@ -86,82 +70,147 @@ function pointToLayerMale(feature, latlng, attributesMale){
         opacity: 1,
         fillOpacity: 0
     };
-
-    //create circle marker layer
-    //return the circle marker to the L.geoJson pointToLayer option
-    var maleMarker = {
-        L.circleMarker(latlng, optionsMale)
-    };
-    return maleMarker
-    //return L.circleMarker(latlng, options);
+    return L.circleMarker(latlng, optionsMale)
 };
 
-// //Add circle markers for point features to the map
-// function createPropSymbols(responseFemale, responseMale, mymap, attributesFemale, attributesMale){
-    
+//function to convert markers to circle markers
+function pointToLayer(feature, latlng){
+    //Determine which attribute to visualize with proportional symbols
+    var attribute = "Pop_2015";
 
-//     //create 2 Leaflet GeoJSON layers by gender and add them to the map
-    
-//     var femaleLayer = L.geoJson(responseFemale, {
-//         pointToLayer: function(feature, latlng){
-//             return pointToLayerFemale(feature, latlng, attributesFemale);
-//         }
-//     }).addTo(mymap);
-    
-//     var maleLayer = L.geoJson(responseMale, {
-//         pointToLayer: function(feature, latlng){
-//             return pointToLayerMale(feature, latlng, attributesMale);
-//         }
-//     }).addTo(mymap);
+    //create marker options
+    var options = {
+        fillColor: "#ff7800",
+        color: "#000",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+    };
+
+    //For each feature, determine its value for the selected attribute
+    var attValue = Number(feature.properties[attribute]);
+
+    //Give each feature's circle marker a radius based on its attribute value
+    options.radius = calcPropRadius(attValue);
+
+    //create circle marker layer
+    var layer = L.circleMarker(latlng, options);
+
+    //build popup content string
+    var popupContent = "<p><b>City:</b> " + feature.properties.City + "</p><p><b>" + attribute + ":</b> " + feature.properties[attribute] + "</p>";
+
+    //bind the popup to the circle marker
+    layer.bindPopup(popupContent);
+
+    //return the circle marker to the L.geoJson pointToLayer option
+    return layer;
+};
 
 //Add circle markers for point features to the map
-function createPropSymbolsFemale(responseFemale, mymap, attributesFemale){
-    
+function createPropSymbols(data, map){
+    //create a Leaflet GeoJSON layer and add it to the map
+    L.geoJson(data, {
+        pointToLayer: pointToLayer
+    }).addTo(map);
+};
 
+
+
+
+//Build an attributes array from the data.
+function processDataFemale(responseFemale){
+    //empty array to hold attributes
+    var attributesFemale = [];
+    //properties of the first feature in the dataset
+    var propertiesFemale = responseFemale.features[0].propertiesFemale;
+    //push each attribute name into attributes array
+    for (var attribute in propertiesFemale){
+        //only take attributes with population values
+        if (attribute.indexOf("20") > -1){
+            attributesFemale.push(attribute);
+        };
+    };
+    //Assign the current attribute based on the index of the attributes array
+    return attributesFemale;
+};
+
+//Build an attributes array from the data.
+function processDataMale(responseMale){
+    //empty array to hold attributes
+    var attributesMale = [];
+    //properties of the first feature in the dataset
+    var propertiesMale = responseMale.features[0].propertiesMale;
+    //push each attribute name into attributes array
+    for (var attribute in propertiesMale){
+        //only take attributes with population values
+        if (attribute.indexOf("20") > -1){
+            attributesMale.push(attribute);
+        };
+    };
+    //Assign the current attribute based on the index of the attributes array
+    return attributesMale;
+};
+
+//Add circle markers for female point features to the map
+function createPropSymbolsFemale(responseFemale, mymap, attributesFemale){
     //create 2 Leaflet GeoJSON layers by gender and add them to the map
-    
     var femaleLayer = L.geoJson(responseFemale, {
         pointToLayerFemale: function(feature, latlng){
             return pointToLayerFemale(feature, latlng, attributesFemale);
         }
     }).addTo(mymap);
+};
     
-
-//Add circle markers for point features to the map
+//Add circle markers for male point features to the map
 function createPropSymbolsMale(responseMale, mymap, attributesMale){
-    
     var maleLayer = L.geoJson(responseMale, {
         pointToLayerMale: function(feature, latlng){
             return pointToLayerMale(feature, latlng, attributesMale);
         }
     }).addTo(mymap);
-
-//Create layers control for overlay
-//Define variables. Create object w/2 layers and assign to l.control layers. Assign as just overlays. baseMaps is null (not toggling tilesets). 
-
-var baseMaps = null;
-
-var overlayMaps = {
-    "Female Under-5 Mortality": femaleLayer,
-    "Male Under-5 Mortality": maleLayer
-};
-    L.control.layers(baseMaps, overlayMaps).addTo(mymap);
-
-
-    updatePropSymbols (mymap, attributesFemale[0], attributesMale[0]);
 };
 
+//Resize proportional symbols according to new attribute values
+function updatePropSymbols(mymap, attribute){
+    map.eachLayer(function(layer){
+        if (layer.feature && layer.feature.properties[attribute]){
+            //access feature properties
+            var props = layer.feature.properties;
 
-//Step 1: Create new sequence controls
-//function createSequenceControls(mymap, attributes){
+            //update each feature's radius based on new attribute values
+            var radius = calcPropRadius(props[attribute]);
+            //if no data exists (value of -9999), use $ isNAN to reassign value radius to 0
+            if (isNaN(radius)){
+                radius = 0;
+            };
+
+            layer.setRadius(radius);
+
+            //add country to popup content string
+            var popupContent = "<p><b>Country:</b> " + props.Country + "</p>";
+
+            //add formatted attribute to popup content string
+            var gender = attribute.split("_")[1];
+            var year = attribute.split("_")[0];
+            popupContent += "<p><b>Deaths under 5 years of age for " + gender + "s "+ "in " + year + ":</b> " + props[attribute] + "</p>";
+
+            //replace the layer popup
+            layer.bindPopup(popupContent, {
+                offset: new L.Point(0,-radius)
+            });
+        };
+    });
+};
+
+//Create female sequence controls
 function createSequenceControlsFemale(mymap, attributesFemale){
     
     //add skip buttons
     $('#panelFemale').append('<button class="skip" id="reverseFemale">Reverse</button>');
     $('#panelFemale').append('<button class="skip" id="forwardFemale">Skip</button>');
     //replace button content with images
-    $('#reverseFemale').html('<img src="img/reverse.png">');
-    $('#forwardFemale').html('<img src="img/forward.png">');
+    $('#reverseFemale').html('<img src="img/reverseFemale.png">');
+    $('#forwardFemale').html('<img src="img/forwardFemale.png">');
 
     //create range input element (slider)
     $('#panelFemale').append('<input class="range-slider" type="range">');
@@ -195,9 +244,9 @@ function createSequenceControlsFemale(mymap, attributesFemale){
         updatePropSymbols(mymap, attributesFemale[index])
     });
 
-    //Step 5: input listener for slider
-    var listenerFemale = $('.range-slider').on('input', function(){
-        //Step 6: get the new index value
+    //Create input listener for slider
+    $('.range-slider').on('input', function(){
+        //Get the new index value
         var index = $(this).val();
         updatePropSymbols(mymap, attributesFemale[index])
     });
@@ -210,8 +259,8 @@ function createSequenceControlsMale(mymap, attributesMale){
     $('#panelMale').append('<button class="skip" id="reverseMale">Reverse</button>');
     $('#panelMale').append('<button class="skip" id="forwardMale">Skip</button>');
     //replace button content with images
-    $('#reverseMale').html('<img src="img/reverse.png">');
-    $('#forwardMale').html('<img src="img/forward.png">');
+    $('#reverseMale').html('<img src="img/reverseMale.png">');
+    $('#forwardMale').html('<img src="img/forwardMale.png">');
 
     //create range input element (slider)
     $('#panelMale').append('<input class="range-slider" type="range">');
@@ -246,65 +295,12 @@ function createSequenceControlsMale(mymap, attributesMale){
         updatePropSymbols(mymap, attributesMale[index])
     });
 
-    //Step 5: input listener for slider
-    var listenerMale = $('.range-slider').on('input', function(){
-        //Step 6: get the new index value
+    //Create input listener for slider
+    $('.range-slider').on('input', function(){
+        //Get the new index value
         var index = $(this).val();
         updatePropSymbols(mymap, attributesMale[index])
     });
-};
-
-//Step 10: Resize proportional symbols according to new attribute values
-function updatePropSymbols(mymap, attribute){
-    map.eachLayer(function(layer){
-        if (layer.feature && layer.feature.properties[attribute]){
-            //access feature properties
-            var props = layer.feature.properties;
-
-            //update each feature's radius based on new attribute values
-            var radius = calcPropRadius(props[attribute]);
-            //if no data exists (value of -9999), use $ isNAN to reassign value radius to 0
-            if (isNaN(radius)){
-                radius = 0;
-            };
-
-            layer.setRadius(radius);
-
-            //add country to popup content string
-            var popupContent = "<p><b>Country:</b> " + props.Country + "</p>";
-
-            //add formatted attribute to popup content string
-            var gender = attribute.split("_")[1];
-            var year = attribute.split("_")[0];
-            popupContent += "<p><b>Deaths under 5 years of age for " + gender + "s "+ "in " + year + ":</b> " + props[attribute] + "</p>";
-
-            //replace the layer popup
-            layer.bindPopup(popupContent, {
-                offset: new L.Point(0,-radius)
-            });
-        };
-    });
-};
-
-
-//Step 3: build an attributes array from the data3. Create an array of the sequential attributes to keep track of their order.
-function processData(data){
-    //empty array to hold attributes
-    var attributes = [];
-
-    //properties of the first feature in the dataset
-    var properties = data.features[0].properties;
-
-    //push each attribute name into attributes array
-    for (var attribute in properties){
-        //only take attributes with population values
-        if (attribute.indexOf("20") > -1){
-            attributes.push(attribute);
-        };
-    
-    };
-    //Assign the current attribute based on the index of the attributes array
-    return attributes;
 };
 
 //Import GeoJSON data and call functions to execute with data AND nested data
@@ -316,11 +312,12 @@ function getFemaleData(mymap){
             $.ajax("data/Male_Child_Mortality.geojson", {
                 dataType: "json",
                 success: function(responseMale){
-                    create an attributes array
-                    var attributesFemale = processData(responseFemale);
-                    var attributesMale = processData(responseMale);
+                    //create an attributes array
+                    var attributesFemale = processDataFemale(responseFemale);
+                    var attributesMale = processDataMale(responseMale);
                     //call function to create proportional symbols
-                    createPropSymbols(responseFemale, responseMale, mymap, attributesFemale, attributesMale);
+                    createPropSymbolsFemale(responseFemale, mymap, attributesFemale);
+                    createPropSymbolsMale(responseMale, mymap, attributesMale);
                     //call function to create an HTML range slider
                     createSequenceControlsFemale(mymap, attributesFemale);
                     createSequenceControlsMale(mymap, attributesMale);
@@ -331,4 +328,4 @@ function getFemaleData(mymap){
 };
 
 //call the initialize function when the document has loaded
-$(document).ready(initialize);
+$(document).ready(createMap);

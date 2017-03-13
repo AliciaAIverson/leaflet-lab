@@ -1,4 +1,11 @@
 /* Stylesheet by AAIverson, Jan.2017 */
+#title{
+    height: 100px;
+    width: 100%;
+    display: inline-block;
+    text-align: center;
+}
+
 #mapid {
     height: 400px;
     width: 100%;
